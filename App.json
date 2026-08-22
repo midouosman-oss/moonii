@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "moonii",
+    "slug": "moonii",
+    "scheme": "moonii",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.moonii.app"
+    },
+    "android": {
+      "package": "com.moonii.app"
+    },
+    "plugins": ["expo-router"]
+  }
+}
