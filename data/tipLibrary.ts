@@ -153,6 +153,17 @@ export const TIP_LIBRARY: Tip[] = [
   },
 ];
 
-export function getTipsForPhase(phase: Phase): Tip[] {
-  return TIP_LIBRARY.filter((tip) => tip.phase === phase);
+export function getTipsForPhase(phase: Phase, region?: string): Tip[] {
+  const normalized = (region ?? "").toLowerCase();
+  const targetRegion = normalized.includes("india")
+    ? "India"
+    : normalized.includes("thailand") || normalized.includes("bangkok")
+      ? "Thailand"
+      : null;
+
+  return TIP_LIBRARY.filter(
+    (tip) =>
+      tip.phase === phase &&
+      (!targetRegion || tip.regions.includes("Global") || tip.regions.includes(targetRegion)),
+  );
 }
