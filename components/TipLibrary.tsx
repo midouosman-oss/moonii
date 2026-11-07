@@ -38,8 +38,8 @@ function TipCard({ tip }: { tip: Tip }) {
   );
 }
 
-export default function TipLibrary({ phase }: { phase: Phase }) {
-  const tips = getTipsForPhase(phase);
+export default function TipLibrary({ phase, region }: { phase: Phase; region?: string }) {
+  const tips = getTipsForPhase(phase, region);
   return (
     <View style={styles.section}>
       <Text style={styles.eyebrow}>YOUR DAILY CARE</Text>
