@@ -18,6 +18,7 @@ import { Feather } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
 import { useColors } from "@/hooks/useColors";
 import { useCycle, Phase } from "@/context/CycleContext";
+import TipLibrary from "@/components/TipLibrary";
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
@@ -548,6 +549,7 @@ function LogModal({
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { ready, hasOnboarded, currentPhase, cycleDay, settings, saveLog, getLog } = useCycle();
+  const [modalVisible, setModalVisible] = useState(false);
 
   // Wait for AsyncStorage to load before deciding anything (avoids a
   // flash of the "no data yet" state), then send first-time users
@@ -559,7 +561,6 @@ export default function HomeScreen() {
   const existingLog = getLog(today);
   const isLogged = !!(existingLog?.moods?.length || existingLog?.energy);
 
-  const [modalVisible, setModalVisible] = useState(false);
   const phaseColor = PHASE_COLORS[currentPhase];
 
   const greeting = (() => {
@@ -682,42 +683,9 @@ export default function HomeScreen() {
           </View>
         </AnimatedCard>
 
-        {/* ── TODAY'S PLAN ── */}
+        {/* ── PHASE-AWARE TIP LIBRARY ── */}
         <AnimatedCard delay={240}>
-          <Text style={styles.sectionLabel}>Today's Plan</Text>
-          <View style={styles.planCard}>
-            {(
-              [
-                { label: "Move", value: plan.move, icon: "activity" as const },
-                { label: "Mind", value: plan.mind, icon: "wind" as const },
-                {
-                  label: "Nourish",
-                  value: plan.nourish,
-                  icon: "coffee" as const,
-                },
-              ] as const
-            ).map(({ label, value, icon }, i, arr) => (
-              <View key={label}>
-                <View style={styles.planRow}>
-                  <View
-                    style={[
-                      styles.planIcon,
-                      { backgroundColor: phaseColor + "14" },
-                    ]}
-                  >
-                    <Feather name={icon} size={14} color={phaseColor} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.planLabel, { color: phaseColor }]}>
-                      {label.toUpperCase()}
-                    </Text>
-                    <Text style={styles.planValue}>{value}</Text>
-                  </View>
-                </View>
-                {i < arr.length - 1 && <View style={styles.planDivider} />}
-              </View>
-            ))}
-          </View>
+          <TipLibrary phase={currentPhase} region={settings.region} />
         </AnimatedCard>
 
         {/* ── DAILY LOG ── */}

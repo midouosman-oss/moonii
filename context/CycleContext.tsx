@@ -12,6 +12,7 @@ export type Phase = "menstrual" | "follicular" | "ovulatory" | "luteal";
 
 export interface CycleSettings {
   name: string;
+  region: string;
   cycleLength: number;
   periodLength: number;
   lastPeriodStart: string | null; // ISO date, e.g. "2026-07-15"
@@ -44,6 +45,7 @@ const LOGS_KEY = "moonii:logs";
 
 const DEFAULT_SETTINGS: CycleSettings = {
   name: "",
+  region: "",
   cycleLength: 28,
   periodLength: 5,
   lastPeriodStart: null,
