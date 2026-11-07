@@ -685,7 +685,7 @@ export default function HomeScreen() {
 
         {/* ── PHASE-AWARE TIP LIBRARY ── */}
         <AnimatedCard delay={240}>
-          <TipLibrary phase={currentPhase} />
+          <TipLibrary phase={currentPhase} region={settings.region} />
         </AnimatedCard>
 
         {/* ── DAILY LOG ── */}
