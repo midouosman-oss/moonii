@@ -11,6 +11,7 @@ export default function OnboardingScreen() {
       onComplete={async (data) => {
         await completeOnboarding({
           lastPeriodStart: data.lastPeriodStart,
+          region: data.region ?? "",
           // cycleLength / periodLength default to 28 / 5 (see CycleContext)
           // until a "tell us about your usual cycle" step is added to the
           // questionnaire — the client's spec doesn't currently ask for
