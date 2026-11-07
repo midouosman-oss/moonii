@@ -63,7 +63,7 @@ interface OnboardingData {
   severity: Partial<Record<Condition, Severity>>;
   dietary: string[];
   ageRange: string | null;
-  timezone: string | null;
+  region: string | null;
   notificationsEnabled: boolean;
   signUpMethod: "google" | "apple" | "email" | null;
   email?: string;
@@ -76,7 +76,7 @@ const initialData: OnboardingData = {
   severity: {},
   dietary: [],
   ageRange: null,
-  timezone: null,
+  region: null,
   notificationsEnabled: false,
   signUpMethod: null,
 };
@@ -206,7 +206,7 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
     //   condition_severity: finalData.severity,
     //   dietary: finalData.dietary,
     //   age_range: finalData.ageRange,
-    //   timezone: finalData.timezone,
+    //   region: finalData.region,
     //   notifications_enabled: finalData.notificationsEnabled,
     // });
     // if (error) throw error;
@@ -365,13 +365,13 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
           )}
 
           {current === "location" && (
-            <StepShell title="Location / timezone" subtitle="We'll use this to time your daily check-ins.">
+            <StepShell title="Where are you based?" subtitle="We'll use this to tailor local food and wellbeing suggestions.">
               {/* Swap for a real dropdown (e.g. a bottom-sheet picker) —
                   a plain text field is a placeholder for the wireframe. */}
               <TextInput
-                value={data.timezone ?? ""}
-                onChangeText={(t) => update("timezone", t)}
-                placeholder="e.g. Europe/Kyiv"
+                value={data.region ?? ""}
+                onChangeText={(t) => update("region", t)}
+                placeholder="e.g. India or Thailand"
                 placeholderTextColor={MUTED}
                 style={styles.input}
               />
