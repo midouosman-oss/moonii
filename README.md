@@ -1,42 +1,81 @@
 # moonii
 
-Cycle-aware wellness app. Onboarding → home dashboard, with real local
-persistence (no backend required to run and click through it).
+Moonii is a cycle-aware wellbeing app built with Expo, React Native and TypeScript.
 
-## What's in this build
+## Included in this build
 
-- `app/onboarding.tsx` — the 8-step onboarding flow from the questionnaire
-  (period date, help needs, conditions, dietary preferences, age range,
-  location, notifications, sign-up)
-- `app/index.tsx` — the home dashboard (cycle card, today's insight, today's
-  plan, daily log)
-- `context/CycleContext.tsx` — real cycle-phase calculation from the date
-  you enter in onboarding, plus log storage. Everything is saved to the
-  device with AsyncStorage, so it survives closing the app.
-- First launch always goes to onboarding. After that, it opens straight to
-  the dashboard.
+- Eight-step onboarding questionnaire with 17 interface languages.
+- Cycle-day and phase estimates based on the last period start date.
+- Home dashboard with daily insight and phase-aware wellbeing suggestions.
+- Daily log for mood, energy, sleep, movement, nourishment, symptoms and notes.
+- Local persistence for settings and daily logs using AsyncStorage.
+- Supabase email authentication and onboarding-response storage.
+- Localized country names and translated recommendation library.
 
-## Not wired up yet (left as clearly marked TODOs in the code)
+## Requirements
 
-- Google / Apple sign-in only fake-succeeds right now — needs real SDK keys
-  for your project
-- No backend yet — `submitToBackend()` in `components/Onboarding.tsx` is a
-  stub with a commented-out Supabase example ready to fill in
-- Date and timezone pickers are plain text inputs, not native pickers
-- Push notifications aren't scheduled — the opt-in step just stores your
-  choice
+- Node.js (LTS recommended)
+- A Supabase project
+- Expo Go for device testing, or an Android/iOS simulator
 
-## Run it
+## Setup
 
-You need a computer with Node.js installed (this can't run from a phone
-alone).
+1. Install dependencies:
 
-\`\`\`bash
-npm install
-npx expo start
-\`\`\`
+   ```bash
+   npm install
+   ```
 
-Then either:
-- press `i` for the iOS simulator (Mac + Xcode only), or
-- press `a` for an Android emulator (Android Studio), or
-- scan the QR code with the **Expo Go** app on your phone
+2. Create a `.env` file in the project root:
+
+   ```env
+   EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT_ID.supabase.co
+   EXPO_PUBLIC_SUPABASE_ANON_KEY=YOUR_SUPABASE_PUBLISHABLE_OR_ANON_KEY
+   ```
+
+   Use the project's publishable/anon key only. Never put a Supabase service-role key in the app.
+
+3. In the Supabase project, open **SQL Editor** and run `supabase/schema.sql`. This creates the `user_onboarding` table and enables row-level security so each signed-in user can access only their own onboarding response.
+
+4. In Supabase Authentication settings, configure the email sign-up and email-confirmation behavior required by the client.
+
+5. Start the app:
+
+   ```bash
+   npx expo start
+   ```
+
+   For web:
+
+   ```bash
+   npx expo start --web
+   ```
+
+   After changing environment variables, restart Expo and clear the Metro cache if needed:
+
+   ```bash
+   npx expo start -c
+   ```
+
+## Validation
+
+Run these before handing off a build:
+
+```bash
+npx tsc --noEmit
+npx expo-doctor
+```
+
+## Current integration boundaries
+
+- Email/password authentication is connected through Supabase.
+- Google and Apple sign-in buttons are present in the interface but are not connected to OAuth providers yet; the app reports that these methods are unavailable.
+- The notification preference is collected and stored with onboarding responses, but push notifications are not scheduled yet.
+- The cycle calculation currently uses the default 28-day cycle and 5-day period unless those settings are changed in stored profile data. It is an estimate, not a medical prediction.
+- Daily logs and core cycle settings are stored on the device. Onboarding questionnaire responses are also sent to the Supabase `user_onboarding` table.
+- The app currently uses a typed date field (DD/MM/YYYY), not a native date picker.
+
+## Data handling
+
+The app stores cycle settings and daily logs in local device storage. The onboarding questionnaire response is synced to the signed-in user's Supabase row. Row-level security is enabled by the SQL setup above.
+
