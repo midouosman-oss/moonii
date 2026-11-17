@@ -493,6 +493,7 @@ export default function Onboarding({
                 style={[
                   styles.input,
                   dateError ? styles.inputError : undefined,
+                  rtl ? { writingDirection: "ltr", textAlign: "left" } : null,
                 ]}
                 keyboardType="number-pad"
                 maxLength={10}
@@ -733,7 +734,7 @@ export default function Onboarding({
                 autoCapitalize="none"
                 keyboardType="email-address"
                 autoCorrect={false}
-                style={[styles.input, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}
+                style={[styles.input, rtl ? { writingDirection: "ltr", textAlign: "left" } : null]}
               />
 
               <View style={[styles.passwordContainer, { marginTop: 10 }]}>
@@ -745,7 +746,7 @@ export default function Onboarding({
                   secureTextEntry={!showPassword}
                   autoCapitalize="none"
                   autoCorrect={false}
-                  style={styles.passwordInput}
+                  style={[styles.passwordInput, rtl ? { writingDirection: "ltr", textAlign: "left" } : null]}
                 />
 
                 <TouchableOpacity
@@ -797,7 +798,7 @@ export default function Onboarding({
 
       <Modal visible={languageModal} transparent animationType="fade" onRequestClose={() => setLanguageModal(false)}>
         <View style={styles.modalBackdrop}>
-          <View style={styles.languageModal}>
+          <View style={[styles.languageModal, rtl ? { direction: "rtl" } : null]}>
             <Text style={styles.stepTitle}>{t("language")}</Text>
             <ScrollView style={{ maxHeight: 420 }}>
               {LANGUAGES.map((item) => (
