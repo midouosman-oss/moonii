@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ExpoHaptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
-import { useCycle, Phase, DailyLog } from "@/context/CycleContext";
+import { useCycle, Phase, type DailyLog } from "@/context/CycleContext";
 import TipLibrary from "@/components/TipLibrary";
 import { COUNTRIES, LANGUAGES, translate, translateOption, isRTL } from "@/lib/i18n";
 import { translateCountry } from "@/data/localizedCountries";
@@ -618,8 +618,8 @@ export default function HomeScreen() {
   const today = `${nowLocal.getFullYear()}-${String(nowLocal.getMonth() + 1).padStart(2, "0")}-${String(nowLocal.getDate()).padStart(2, "0")}`;
 
   const handleSave = useCallback(
-    (data: any) => {
-      saveLog(today, data);
+    (data: DailyLog) => {
+      void saveLog(today, data);
     },
     [saveLog, today],
   );
