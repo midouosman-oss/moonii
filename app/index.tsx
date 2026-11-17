@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as ExpoHaptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 import { Redirect } from "expo-router";
-import { useCycle, Phase } from "@/context/CycleContext";
+import { useCycle, Phase, DailyLog } from "@/context/CycleContext";
 import TipLibrary from "@/components/TipLibrary";
 import { COUNTRIES, LANGUAGES, translate, translateOption, isRTL } from "@/lib/i18n";
 import { translateCountry } from "@/data/localizedCountries";
@@ -342,13 +342,15 @@ function LogModal({
   language,
   onClose,
   onSave,
+  initialLog,
 }: {
   visible: boolean;
   phaseColor: string;
   phase: Phase;
   language: string;
   onClose: () => void;
-  onSave: (data: any) => void;
+  onSave: (data: DailyLog) => void;
+  initialLog?: DailyLog;
 }) {
   const insets = useSafeAreaInsets();
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -364,13 +366,13 @@ function LogModal({
 
   useEffect(() => {
     if (visible) {
-      setMoods([]);
-      setEnergy("");
-      setSleep("");
-      setMovement([]);
-      setNourishment([]);
-      setSymptoms([]);
-      setNote("");
+      setMoods(initialLog?.moods ?? []);
+      setEnergy(initialLog?.energy ? ENERGY_LEVELS[initialLog.energy - 1] ?? "" : "");
+      setSleep(initialLog?.sleep ?? "");
+      setMovement(initialLog?.movement ?? []);
+      setNourishment(initialLog?.nourishment ?? []);
+      setSymptoms(initialLog?.symptoms ?? []);
+      setNote(initialLog?.notes ?? "");
 
       Animated.parallel([
         Animated.spring(slideAnim, {
@@ -401,7 +403,7 @@ function LogModal({
         }),
       ]).start();
     }
-  }, [visible]);
+  }, [visible, initialLog]);
 
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
@@ -414,12 +416,12 @@ function LogModal({
   const handleSave = () => {
     onSave({
       moods,
-      energy: ENERGY_LEVELS.indexOf(energy) + 1,
+      ...(energy ? { energy: ENERGY_LEVELS.indexOf(energy) + 1 } : {}),
       sleep,
       movement,
       nourishment,
       symptoms,
-      note,
+      notes: note.trim(),
     });
 
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -626,7 +628,15 @@ export default function HomeScreen() {
   if (!hasOnboarded) return <Redirect href="/onboarding" />;
 
   const existingLog = getLog(today);
-  const isLogged = !!(existingLog?.moods?.length || existingLog?.energy);
+  const isLogged = !!(
+    existingLog?.moods?.length ||
+    existingLog?.energy ||
+    existingLog?.sleep ||
+    existingLog?.movement?.length ||
+    existingLog?.nourishment?.length ||
+    existingLog?.symptoms?.length ||
+    existingLog?.notes?.trim()
+  );
 
   const phaseColor = PHASE_COLORS[currentPhase];
 
@@ -900,6 +910,7 @@ export default function HomeScreen() {
         language={settings.language}
         onClose={() => setModalVisible(false)}
         onSave={handleSave}
+        initialLog={existingLog}
       />
     </View>
   );
