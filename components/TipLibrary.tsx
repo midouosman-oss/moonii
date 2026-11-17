@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import type { Phase } from "@/context/CycleContext";
 import { getTipsForPhase, type Tip } from "@/data/tipLibrary";
-import { translate } from "@/lib/i18n";
+import { translate, isRTL } from "@/lib/i18n";
 import { getLocalizedTip } from "@/data/localizedTips";
 
 const RU_TIPS: Record<string, Pick<Tip, "topic" | "nudge" | "explanation" | "tags">> = {
@@ -91,20 +91,21 @@ function TipCard({ tip, language }: { tip: Tip; language: string }) {
   const pillar = translate(language, PILLAR_KEYS[tip.pillar]);
   const energy = translate(language, `energy_${tip.energy.toLowerCase()}`);
   const color = tip.pillar === "Nourishment" ? "#c4836a" : tip.pillar === "Movement" ? "#7ab090" : "#9a9a50";
+  const rtl = isRTL(language);
 
   return (
     <View style={styles.card}>
-      <View style={styles.topRow}>
-        <Text style={[styles.pillar, { color }]}>{pillar.toUpperCase()}</Text>
-        <Text style={styles.energy}>{energy.toUpperCase()}</Text>
+      <View style={[styles.topRow, rtl && styles.rtlRow]}>
+        <Text style={[styles.pillar, { color }, rtl && styles.rtlText]}>{pillar.toUpperCase()}</Text>
+        <Text style={[styles.energy, rtl && styles.rtlText]}>{energy.toUpperCase()}</Text>
       </View>
-      <Text style={styles.nudge}>{localized?.nudge ?? tip.nudge}</Text>
-      <Text style={styles.topic}>{localized?.topic ?? tip.topic}</Text>
-      <Text style={styles.explanation}>{localized?.explanation ?? tip.explanation}</Text>
-      <View style={styles.tags}>
+      <Text style={[styles.nudge, rtl && styles.rtlText]}>{localized?.nudge ?? tip.nudge}</Text>
+      <Text style={[styles.topic, rtl && styles.rtlText]}>{localized?.topic ?? tip.topic}</Text>
+      <Text style={[styles.explanation, rtl && styles.rtlText]}>{localized?.explanation ?? tip.explanation}</Text>
+      <View style={[styles.tags, rtl && styles.rtlRow]}>
         {(localized?.tags ?? tip.tags).map((tag) => (
           <View key={tag} style={styles.tag}>
-            <Text style={styles.tagText}>{tag}</Text>
+            <Text style={[styles.tagText, rtl && styles.rtlText]}>{tag}</Text>
           </View>
         ))}
       </View>
@@ -114,19 +115,22 @@ function TipCard({ tip, language }: { tip: Tip; language: string }) {
 
 export default function TipLibrary({ phase, region, language = "en" }: { phase: Phase; region?: string; language?: string }) {
   const tips = getTipsForPhase(phase, region);
+  const rtl = isRTL(language);
   return (
     <View style={styles.section}>
-      <Text style={styles.eyebrow}>{translate(language, "daily_care")}</Text>
-      <Text style={styles.heading}>{translate(language, "care_heading", { phase: translate(language, phase) })}</Text>
-      <Text style={styles.subheading}>{translate(language, "care_subheading")}</Text>
+      <Text style={[styles.eyebrow, rtl && styles.rtlText]}>{translate(language, "daily_care")}</Text>
+      <Text style={[styles.heading, rtl && styles.rtlText]}>{translate(language, "care_heading", { phase: translate(language, phase) })}</Text>
+      <Text style={[styles.subheading, rtl && styles.rtlText]}>{translate(language, "care_subheading")}</Text>
       {tips.map((tip) => <TipCard key={tip.id} tip={tip} language={language} />)}
-      <Text style={styles.disclaimer}>{translate(language, "disclaimer")}</Text>
+      <Text style={[styles.disclaimer, rtl && styles.rtlText]}>{translate(language, "disclaimer")}</Text>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   section: { marginBottom: 22 },
+  rtlText: { textAlign: "right", writingDirection: "rtl" },
+  rtlRow: { flexDirection: "row-reverse" },
   eyebrow: { fontFamily: "DMSans_700Bold", fontSize: 9, letterSpacing: 2.5, color: "#c0a0b0", marginBottom: 8, marginLeft: 2 },
   heading: { fontFamily: "CormorantGaramond_300Light_Italic", fontSize: 25, lineHeight: 30, color: "#1a1015", marginBottom: 5 },
   subheading: { fontFamily: "DMSans_400Regular", fontSize: 12, lineHeight: 19, color: "#a8788c", marginBottom: 14 },
