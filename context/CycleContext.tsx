@@ -62,10 +62,24 @@ function normalizeSettings(
   const cycleLength = Number(data?.cycleLength);
   const periodLength = Number(data?.periodLength);
 
-  const validDate =
-    typeof data?.lastPeriodStart === "string" &&
-    /^\d{4}-\d{2}-\d{2}$/.test(data.lastPeriodStart) &&
-    !Number.isNaN(new Date(data.lastPeriodStart + "T00:00:00").getTime());
+  const dateMatch =
+    typeof data?.lastPeriodStart === "string"
+      ? data.lastPeriodStart.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+      : null;
+  const validDate = (() => {
+    if (!dateMatch) return false;
+    const year = Number(dateMatch[1]);
+    const month = Number(dateMatch[2]);
+    const day = Number(dateMatch[3]);
+    const date = new Date(year, month - 1, day);
+    return (
+      year >= 1900 &&
+      year <= 2100 &&
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    );
+  })();
 
   return {
     ...DEFAULT_SETTINGS,
