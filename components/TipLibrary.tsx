@@ -127,13 +127,13 @@ export default function TipLibrary({ phase, region, language = "en" }: { phase: 
 
 const styles = StyleSheet.create({
   section: { marginBottom: 22 },
-  eyebrow: { fontFamily: "DMSans_600SemiBold", fontSize: 9, letterSpacing: 2.5, color: "#c0a0b0", marginBottom: 8, marginLeft: 2 },
+  eyebrow: { fontFamily: "DMSans_700Bold", fontSize: 9, letterSpacing: 2.5, color: "#c0a0b0", marginBottom: 8, marginLeft: 2 },
   heading: { fontFamily: "CormorantGaramond_300Light_Italic", fontSize: 25, lineHeight: 30, color: "#1a1015", marginBottom: 5 },
   subheading: { fontFamily: "DMSans_400Regular", fontSize: 12, lineHeight: 19, color: "#a8788c", marginBottom: 14 },
   card: { backgroundColor: "#fff", borderRadius: 20, padding: 18, marginBottom: 12, shadowColor: "#C97B96", shadowOpacity: 0.06, shadowRadius: 12, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   topRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 9 },
-  pillar: { fontFamily: "DMSans_600SemiBold", fontSize: 9, letterSpacing: 1.8 },
-  energy: { fontFamily: "DMSans_600SemiBold", fontSize: 8, letterSpacing: 1.2, color: "#b09aa5" },
+  pillar: { fontFamily: "DMSans_700Bold", fontSize: 9, letterSpacing: 1.8 },
+  energy: { fontFamily: "DMSans_700Bold", fontSize: 8, letterSpacing: 1.2, color: "#b09aa5" },
   nudge: { fontFamily: "CormorantGaramond_300Light_Italic", fontSize: 22, lineHeight: 27, color: "#1a1015", marginBottom: 5 },
   topic: { fontFamily: "DMSans_500Medium", fontSize: 10, color: "#a8788c", marginBottom: 9 },
   explanation: { fontFamily: "DMSans_400Regular", fontSize: 12, lineHeight: 20, color: "#5b4550" },
