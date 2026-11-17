@@ -123,7 +123,10 @@ function parseDateInput(value: string): string | null {
     return null;
   }
 
-  if (date.getTime() > Date.now()) return null;
+  const selectedDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (selectedDate > today) return null;
 
   return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
 }
