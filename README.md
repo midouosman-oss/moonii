@@ -59,12 +59,13 @@ Moonii is a cycle-aware wellbeing app built with Expo, React Native and TypeScri
 
 ## Validation
 
-Run these before handing off a build:
+Run both checks with one command before handing off a build:
 
 ```bash
-npx tsc --noEmit
-npx expo-doctor
+npm run check
 ```
+
+Or run them separately with `npm run typecheck` and `npm run doctor`.
 
 ## Current integration boundaries
 
