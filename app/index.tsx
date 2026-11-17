@@ -767,7 +767,10 @@ export default function HomeScreen() {
 
                 <Text style={styles.logSummaryLine}>
                   {existingLog?.moods?.length
-                    ? existingLog.moods.slice(0, 3).join(", ")
+                    ? existingLog.moods.slice(0, 3).map((moodId: string) => {
+                        const mood = MOODS.find((item) => item.id === moodId);
+                        return mood ? translateOption(settings.language, mood.label) : moodId;
+                      }).join(", ")
                     : translate(settings.language, "log_saved")}
                 </Text>
 
