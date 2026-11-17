@@ -416,7 +416,7 @@ function LogModal({
   const handleSave = () => {
     onSave({
       moods,
-      ...(energy ? { energy: ENERGY_LEVELS.indexOf(energy) + 1 } : {}),
+      energy: energy ? ENERGY_LEVELS.indexOf(energy) + 1 : 0,
       sleep,
       movement,
       nourishment,
