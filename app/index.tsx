@@ -910,12 +910,12 @@ const styles = StyleSheet.create({
   localeBackdrop: { flex: 1, backgroundColor: "rgba(26,16,21,0.35)", justifyContent: "center", padding: 18 },
   localeSheet: { maxHeight: "85%", backgroundColor: "#fdf6f4", borderRadius: 22, padding: 18 },
   localeHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  localeTitle: { fontFamily: "DMSans_600SemiBold", fontSize: 17, color: "#1a1015" },
-  localeSection: { fontFamily: "DMSans_600SemiBold", fontSize: 10, letterSpacing: 1.4, color: "#a8788c", marginTop: 14, marginBottom: 5 },
+  localeTitle: { fontFamily: "DMSans_700Bold", fontSize: 17, color: "#1a1015" },
+  localeSection: { fontFamily: "DMSans_700Bold", fontSize: 10, letterSpacing: 1.4, color: "#a8788c", marginTop: 14, marginBottom: 5 },
   localeOption: { minHeight: 39, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#eddde5", paddingVertical: 7 },
   localeOptionText: { fontFamily: "DMSans_400Regular", fontSize: 13, color: "#5b4550" },
   localeDone: { backgroundColor: "#C97B96", borderRadius: 14, padding: 12, alignItems: "center", marginTop: 12 },
-  localeDoneText: { fontFamily: "DMSans_600SemiBold", color: "#fff", fontSize: 13 },
+  localeDoneText: { fontFamily: "DMSans_700Bold", color: "#fff", fontSize: 13 },
   container: { flex: 1, backgroundColor: "#fdf6f4" },
   blob: { position: "absolute", borderRadius: 999 },
   scroll: { flex: 1 },
@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
   },
 
   sectionLabel: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 9,
     letterSpacing: 2.5,
     color: "#c0a0b0",
@@ -969,7 +969,7 @@ const styles = StyleSheet.create({
     lineHeight: 78,
   },
   dayLabel: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 8,
     letterSpacing: 2,
     color: "#c0a0b0",
@@ -978,7 +978,7 @@ const styles = StyleSheet.create({
   },
   divider: { width: 1, height: 90, marginHorizontal: 20 },
   phaseBlock: { flex: 1, gap: 4 },
-  phaseName: { fontFamily: "DMSans_600SemiBold", fontSize: 18 },
+  phaseName: { fontFamily: "DMSans_700Bold", fontSize: 18 },
   cycleLength: {
     fontFamily: "DMSans_400Regular",
     fontSize: 11,
@@ -992,7 +992,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   phaseBadgeText: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 9,
     letterSpacing: 1,
   },
@@ -1058,7 +1058,7 @@ const styles = StyleSheet.create({
     flexShrink: 0,
   },
   planLabel: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 8,
     letterSpacing: 2,
     marginBottom: 3,
@@ -1093,12 +1093,12 @@ const styles = StyleSheet.create({
   },
   logStatusDot: { width: 7, height: 7, borderRadius: 4 },
   logStatus: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     letterSpacing: 1.5,
   },
   logStatusEmpty: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 10,
     letterSpacing: 1.5,
     color: "#b09aa5",
@@ -1110,7 +1110,7 @@ const styles = StyleSheet.create({
     borderRadius: 50,
   },
   checkInText: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 9,
     letterSpacing: 1.5,
   },
@@ -1127,7 +1127,7 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   logBtnText: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 15,
     color: "#fff",
   },
@@ -1207,7 +1207,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   sheetTitle: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 18,
     color: "#1a1015",
   },
@@ -1221,7 +1221,7 @@ const styles = StyleSheet.create({
   },
 
   sheetSection: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 9,
     letterSpacing: 2.5,
     color: "#c0a0b0",
@@ -1301,7 +1301,7 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   saveBtnText: {
-    fontFamily: "DMSans_600SemiBold",
+    fontFamily: "DMSans_700Bold",
     fontSize: 15,
     color: "#fff",
   },
