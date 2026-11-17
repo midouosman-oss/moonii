@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -93,6 +93,11 @@ function formatDateInput(value: string): string {
   }
 
   return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function formatISODateInput(value: string): string {
+  const match = value.match(/^(\\d{4})-(\\d{2})-(\\d{2})$/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : "";
 }
 
 // Convert DD/MM/YYYY to YYYY-MM-DD after validating the real calendar date.
@@ -193,7 +198,7 @@ export default function Onboarding({
   language = "en",
   onLanguageChange,
 }: {
-  onComplete?: (data: OnboardingData) => void;
+  onComplete?: (data: OnboardingData) => void | Promise<void>;
   language?: string;
   onLanguageChange?: (language: string) => void;
 }) {
@@ -228,6 +233,35 @@ export default function Onboarding({
 
   const total = steps.length;
   const current = steps[step];
+
+  useEffect(() => {
+    let mounted = true;
+
+    AsyncStorage.getItem(PENDING_KEY)
+      .then((raw) => {
+        if (!mounted || !raw) return;
+
+        try {
+          const pending = JSON.parse(raw) as Partial<OnboardingData>;
+          setData({ ...initialData, ...pending });
+          if (pending.lastPeriodStart) {
+            setDateInput(formatISODateInput(pending.lastPeriodStart));
+          }
+          if (pending.email) setEmailInput(pending.email);
+          setStep(total - 1);
+        } catch (error) {
+          console.warn("Moonii: could not restore pending onboarding", error);
+          void AsyncStorage.removeItem(PENDING_KEY);
+        }
+      })
+      .catch((error) => {
+        console.warn("Moonii: could not read pending onboarding", error);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   function animateTo(nextStep: number) {
     Animated.sequence([
@@ -310,8 +344,6 @@ export default function Onboarding({
       throw new Error(t("saveFailed"));
     }
 
-    await AsyncStorage.removeItem(PENDING_KEY);
-
     console.log("Moonii: onboarding saved", savedData.user_id);
   }
 
@@ -330,7 +362,8 @@ export default function Onboarding({
 
     await submitToBackend(finalData, authData.user.id);
 
-    onComplete?.(finalData);
+    await onComplete?.(finalData);
+    await AsyncStorage.removeItem(PENDING_KEY);
   }
 
   async function handleSignUp(
