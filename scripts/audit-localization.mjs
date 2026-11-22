@@ -18,6 +18,7 @@ const mandeepLocalizedBatch11 = read("../data/mandeepLocalizedTipsBatch11.ts");
 const mandeepLocalizedBatch12 = read("../data/mandeepLocalizedTipsBatch12.ts");
 const mandeepLocalizedBatch13 = read("../data/mandeepLocalizedTipsBatch13.ts");
 const mandeepLocalizedBatch14 = read("../data/mandeepLocalizedTipsBatch14.ts");
+const mandeepLocalizedBatch15 = read("../data/mandeepLocalizedTipsBatch15.ts");
 const tipComponent = read("../components/TipLibrary.tsx");
 const onboarding = read("../lib/onboardingI18n.ts");
 
@@ -59,6 +60,7 @@ const mandeepBatch11Start = mandeepLocalizedBatch11.indexOf("export const MANDEE
 const mandeepBatch12Start = mandeepLocalizedBatch12.indexOf("export const MANDEEP_LOCALIZED_TIPS_BATCH12");
 const mandeepBatch13Start = mandeepLocalizedBatch13.indexOf("export const MANDEEP_LOCALIZED_TIPS_BATCH13");
 const mandeepBatch14Start = mandeepLocalizedBatch14.indexOf("export const MANDEEP_LOCALIZED_TIPS_BATCH14");
+const mandeepBatch15Start = mandeepLocalizedBatch15.indexOf("export const MANDEEP_LOCALIZED_TIPS_BATCH15");
 const onStart = onboarding.indexOf("export const ONBOARDING_TRANSLATIONS");
 const ruStart = tipComponent.indexOf("const RU_TIPS");
 const onboardingEnglish = keysIn(localeBlock(onboarding, "en", onStart));
@@ -87,7 +89,8 @@ for (const locale of locales) {
         ...idsIn(localeBlock(mandeepLocalizedBatch11, locale, mandeepBatch11Start)),
         ...idsIn(localeBlock(mandeepLocalizedBatch12, locale, mandeepBatch12Start)),
         ...idsIn(localeBlock(mandeepLocalizedBatch13, locale, mandeepBatch13Start)),
-        ...idsIn(localeBlock(mandeepLocalizedBatch14, locale, mandeepBatch14Start))
+        ...idsIn(localeBlock(mandeepLocalizedBatch14, locale, mandeepBatch14Start)),
+        ...idsIn(localeBlock(mandeepLocalizedBatch15, locale, mandeepBatch15Start))
       ])];
   const covered = locale === "en" ? uniqueTipIds : tipBlock;
   const missing = uniqueTipIds.filter((id) => !covered.includes(id));
