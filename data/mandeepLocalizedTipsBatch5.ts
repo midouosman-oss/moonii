@@ -25,7 +25,7 @@ vi: {
 },
 th: {
 "NO-F-005": { topic:"มื้ออาหารที่มีโปรตีน", nudge:"ลองเพิ่มแหล่งโปรตีนในทุกมื้อ เช่น ไข่ ปลา ถั่ว เต้าหู้ หรือพาเนียร์", explanation:"โปรตีนช่วยสร้างกล้ามเนื้อและซ่อมแซมเนื้อเยื่อ พร้อมให้สารอาหารที่ร่างกายต้องการ หากสะดวกอาจแบ่งรับประทานในมื้อต่าง ๆ ตลอดวัน ไม่มีปริมาณหรือแผนตามระยะรอบเดือนแบบเดียวที่เหมาะกับทุกคน", tags:["โปรตีน","โภชนาการ"] },
-"NO-F-006": { topic:"ชาทุลซี", nudge:"หากชอบ วันนี้ลองดื่มชาทุลซีสักถ้วยจากใบสดหรือถุงชา", explanation:"ทุลซีมีการใช้ตาม传统ในศาสตร์อายุรเวท และมีงานวิจัยเบื้องต้นศึกษาผลที่อาจเกิดขึ้น แต่หลักฐานด้านประโยชน์ต่อสุขภาพยังมีจำกัด ดื่มเป็นเครื่องดื่มได้หากเหมาะกับคุณ แต่อย่าถือว่าเป็นการรักษาความเครียดหรือใช้แทนการดูแลทางการแพทย์", tags:["ทุลซี","เครื่องดื่มสมุนไพร"] }
+"NO-F-006": { topic:"ชาทุลซี", nudge:"หากชอบ วันนี้ลองดื่มชาทุลซีสักถ้วยจากใบสดหรือถุงชา", explanation:"ทุลซีมีการใช้ตามประเพณีในศาสตร์อายุรเวท และมีงานวิจัยเบื้องต้นศึกษาผลที่อาจเกิดขึ้น แต่หลักฐานด้านประโยชน์ต่อสุขภาพยังมีจำกัด ดื่มเป็นเครื่องดื่มได้หากเหมาะกับคุณ แต่อย่าถือว่าเป็นการรักษาความเครียดหรือใช้แทนการดูแลทางการแพทย์", tags:["ทุลซี","เครื่องดื่มสมุนไพร"] }
 },
 id: {
 "NO-F-005": { topic:"Makanan kaya protein", nudge:"Sertakan sumber protein dalam setiap waktu makan, seperti telur, ikan, kacang-kacangan, tahu, atau paneer.", explanation:"Protein membantu membangun otot dan memperbaiki jaringan serta menyediakan nutrisi yang dibutuhkan tubuh. Jika cocok, bagikan asupan protein ke beberapa waktu makan sepanjang hari. Tidak ada satu jumlah atau rencana berdasarkan fase siklus yang sesuai untuk semua orang.", tags:["Protein","Nutrisi"] },
