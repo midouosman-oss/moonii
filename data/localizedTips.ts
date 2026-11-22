@@ -11,6 +11,7 @@ import { MANDEEP_LOCALIZED_TIPS_BATCH9 } from "@/data/mandeepLocalizedTipsBatch9
 import { MANDEEP_LOCALIZED_TIPS_BATCH10 } from "@/data/mandeepLocalizedTipsBatch10";
 import { MANDEEP_LOCALIZED_TIPS_BATCH11 } from "@/data/mandeepLocalizedTipsBatch11";
 import { MANDEEP_LOCALIZED_TIPS_BATCH12 } from "@/data/mandeepLocalizedTipsBatch12";
+import { MANDEEP_LOCALIZED_TIPS_BATCH13 } from "@/data/mandeepLocalizedTipsBatch13";
 
 type Copy = Pick<Tip, "topic" | "nudge" | "explanation" | "tags">;
 type LocaleTips = Record<string, Copy>;
@@ -235,5 +236,5 @@ export const LOCALIZED_TIPS: Record<string, LocaleTips> = {
 };
 
 export function getLocalizedTip(language: string, tipId: string): Copy | undefined {
-  return MANDEEP_LOCALIZED_TIPS_BATCH12[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH11[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH10[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH9[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH8[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH7[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH6[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH5[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH4[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH3[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_EXTRA[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS[language]?.[tipId] ?? LOCALIZED_TIPS[language]?.[tipId];
+  return MANDEEP_LOCALIZED_TIPS_BATCH13[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH12[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH11[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH10[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH9[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH8[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH7[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH6[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH5[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH4[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH3[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_EXTRA[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS[language]?.[tipId] ?? LOCALIZED_TIPS[language]?.[tipId];
 }
