@@ -4,6 +4,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), "utf8");
 const locales = ["en", "ar", "hi", "bn", "ms", "vi", "th", "id", "zh", "ru", "uk", "es", "fr", "de", "pt", "ja", "ko"];
 const library = read("../data/tipLibrary.ts");
 const localized = read("../data/localizedTips.ts");
+const mandeepLocalized = read("../data/mandeepLocalizedTips.ts");
 const tipComponent = read("../components/TipLibrary.tsx");
 const onboarding = read("../lib/onboardingI18n.ts");
 
@@ -31,6 +32,7 @@ function keysIn(source) {
 }
 
 const tipStart = localized.indexOf("export const LOCALIZED_TIPS");
+const mandeepTipStart = mandeepLocalized.indexOf("export const MANDEEP_LOCALIZED_TIPS");
 const onStart = onboarding.indexOf("export const ONBOARDING_TRANSLATIONS");
 const ruStart = tipComponent.indexOf("const RU_TIPS");
 const onboardingEnglish = keysIn(localeBlock(onboarding, "en", onStart));
@@ -45,7 +47,7 @@ for (const locale of locales) {
     ? uniqueTipIds
     : locale === "ru"
       ? idsIn(tipComponent.slice(ruStart, tipComponent.indexOf("};", ruStart)))
-      : idsIn(localeBlock(localized, locale, tipStart));
+      : [...new Set([...idsIn(localeBlock(localized, locale, tipStart)), ...idsIn(localeBlock(mandeepLocalized, locale, mandeepTipStart))])];
   const covered = locale === "en" ? uniqueTipIds : tipBlock;
   const missing = uniqueTipIds.filter((id) => !covered.includes(id));
   const onKeys = keysIn(localeBlock(onboarding, locale, onStart));
