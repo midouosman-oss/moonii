@@ -11,7 +11,7 @@ const tipIds = [...library.matchAll(/"id":\s*"([A-Z]{2}-[A-Z]-\d{3})"/g)].map((m
 const uniqueTipIds = [...new Set(tipIds)];
 
 function localeBlock(source, locale, startAt = 0) {
-  const marker = new RegExp(`^\\s{2}${locale}: \\{`, "m");
+  const marker = new RegExp(`^\\s{2}${locale}:\\s*\\{`, "m");
   const tail = source.slice(startAt);
   const match = marker.exec(tail);
   if (!match) return "";
