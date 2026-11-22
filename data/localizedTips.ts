@@ -7,6 +7,7 @@ import { MANDEEP_LOCALIZED_TIPS_BATCH5 } from "@/data/mandeepLocalizedTipsBatch5
 import { MANDEEP_LOCALIZED_TIPS_BATCH6 } from "@/data/mandeepLocalizedTipsBatch6";
 import { MANDEEP_LOCALIZED_TIPS_BATCH7 } from "@/data/mandeepLocalizedTipsBatch7";
 import { MANDEEP_LOCALIZED_TIPS_BATCH8 } from "@/data/mandeepLocalizedTipsBatch8";
+import { MANDEEP_LOCALIZED_TIPS_BATCH9 } from "@/data/mandeepLocalizedTipsBatch9";
 
 type Copy = Pick<Tip, "topic" | "nudge" | "explanation" | "tags">;
 type LocaleTips = Record<string, Copy>;
@@ -231,5 +232,5 @@ export const LOCALIZED_TIPS: Record<string, LocaleTips> = {
 };
 
 export function getLocalizedTip(language: string, tipId: string): Copy | undefined {
-  return MANDEEP_LOCALIZED_TIPS_BATCH8[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH7[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH6[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH5[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH4[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH3[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_EXTRA[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS[language]?.[tipId] ?? LOCALIZED_TIPS[language]?.[tipId];
+  return MANDEEP_LOCALIZED_TIPS_BATCH9[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH8[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH7[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH6[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH5[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH4[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_BATCH3[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS_EXTRA[language]?.[tipId] ?? MANDEEP_LOCALIZED_TIPS[language]?.[tipId] ?? LOCALIZED_TIPS[language]?.[tipId];
 }
