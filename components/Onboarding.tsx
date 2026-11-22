@@ -1,37 +1,33 @@
-import React, { useState, useRef } from "react";
+
+import React, { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
+  Modal,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
   TextInput,
   Animated,
   Platform,
-  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
+import { supabase } from "@/lib/supabase";
+import { LANGUAGES, isRTL } from "@/lib/i18n";
+import { onboardingText as ot } from "@/lib/onboardingI18n";
 
-// ─────────────────────────────────────────────────────────────────────────
-// Brand tokens — pull these from the shared design-tokens file once one
-// exists (see "technical debt" note in the improvements list: HTML and RN
-// currently duplicate colours/copy in two places).
-// ─────────────────────────────────────────────────────────────────────────
 const ACCENT = "#C97B96";
 const BG = "#fdf6f4";
 const CARD = "#ffffff";
 const DARK = "#1a0e14";
 const MUTED = "#a8788c";
-const PILL = "#fce9f0";
 const BORDER = "#eddde5";
 
 const STORAGE_KEY = "moonii:onboarding";
+const PENDING_KEY = "moonii:pending-onboarding";
 
-// ─────────────────────────────────────────────────────────────────────────
-// Step data, transcribed from the client's handwritten questionnaire
-// ─────────────────────────────────────────────────────────────────────────
 const HELP_OPTIONS = [
   "Managing symptoms e.g. cramps",
   "Understanding my cycle better",
@@ -57,13 +53,13 @@ type Condition = "endometriosis" | "pcos" | "none";
 type Severity = "low" | "medium" | "severe";
 
 interface OnboardingData {
-  lastPeriodStart: string | null; // ISO date
+  lastPeriodStart: string | null;
   helpNeeds: string[];
   conditions: Condition[];
   severity: Partial<Record<Condition, Severity>>;
   dietary: string[];
   ageRange: string | null;
-  timezone: string | null;
+  region: string | null;
   notificationsEnabled: boolean;
   signUpMethod: "google" | "apple" | "email" | null;
   email?: string;
@@ -76,22 +72,80 @@ const initialData: OnboardingData = {
   severity: {},
   dietary: [],
   ageRange: null,
-  timezone: null,
+  region: null,
   notificationsEnabled: false,
   signUpMethod: null,
 };
 
 function toggleInArray<T>(arr: T[], value: T): T[] {
-  return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+  return arr.includes(value)
+    ? arr.filter((v) => v !== value)
+    : [...arr, value];
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Reusable pieces
-// ─────────────────────────────────────────────────────────────────────────
+// Format entered digits as DD/MM/YYYY.
+function formatDateInput(value: string): string {
+  const digits = value.replace(/\D/g, "").slice(0, 8);
+
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 4) {
+    return `${digits.slice(0, 2)}/${digits.slice(2)}`;
+  }
+
+  return `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4)}`;
+}
+
+function formatISODateInput(value: string): string {
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  return match ? `${match[3]}/${match[2]}/${match[1]}` : "";
+}
+
+// Convert DD/MM/YYYY to YYYY-MM-DD after validating the real calendar date.
+function parseDateInput(value: string): string | null {
+  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (!match) return null;
+
+  const day = Number(match[1]);
+  const month = Number(match[2]);
+  const year = Number(match[3]);
+
+  if (year < 1900 || year > 2100 || month < 1 || month > 12 || day < 1) {
+    return null;
+  }
+
+  const date = new Date(Date.UTC(year, month - 1, day));
+
+  if (
+    date.getUTCFullYear() !== year ||
+    date.getUTCMonth() !== month - 1 ||
+    date.getUTCDate() !== day
+  ) {
+    return null;
+  }
+
+  const selectedDate = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (selectedDate > today) return null;
+
+  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+}
+
+function triggerHaptic() {
+  if (Platform.OS !== "web") {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+  }
+}
+
 function ProgressBar({ step, total }: { step: number; total: number }) {
   return (
     <View style={styles.progressTrack}>
-      <View style={[styles.progressFill, { width: `${((step + 1) / total) * 100}%` }]} />
+      <View
+        style={[
+          styles.progressFill,
+          { width: `${((step + 1) / total) * 100}%` },
+        ]}
+      />
     </View>
   );
 }
@@ -100,20 +154,24 @@ function Chip({
   label,
   selected,
   onPress,
+  rtl = false,
 }: {
   label: string;
   selected: boolean;
   onPress: () => void;
+  rtl?: boolean;
 }) {
   return (
     <TouchableOpacity
       onPress={() => {
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        triggerHaptic();
         onPress();
       }}
       style={[styles.chip, selected && styles.chipSelected]}
     >
-      <Text style={[styles.chipText, selected && styles.chipTextSelected]}>{label}</Text>
+      <Text style={[styles.chipText, selected && styles.chipTextSelected, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }
@@ -122,29 +180,47 @@ function StepShell({
   title,
   subtitle,
   children,
+  rtl = false,
 }: {
   title: string;
   subtitle?: string;
   children: React.ReactNode;
+  rtl?: boolean;
 }) {
   return (
     <View style={{ flex: 1 }}>
-      <Text style={styles.stepTitle}>{title}</Text>
-      {subtitle ? <Text style={styles.stepSubtitle}>{subtitle}</Text> : null}
+      <Text style={[styles.stepTitle, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}>{title}</Text>
+      {subtitle ? <Text style={[styles.stepSubtitle, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}>{subtitle}</Text> : null}
       <View style={{ marginTop: 24 }}>{children}</View>
     </View>
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Main flow
-// ─────────────────────────────────────────────────────────────────────────
-export default function Onboarding({ onComplete }: { onComplete?: (data: OnboardingData) => void }) {
+export default function Onboarding({
+  onComplete,
+  language = "en",
+  onLanguageChange,
+}: {
+  onComplete?: (data: OnboardingData) => void | Promise<void>;
+  language?: string;
+  onLanguageChange?: (language: string) => void;
+}) {
+  const [languageModal, setLanguageModal] = useState(false);
+  const t = (key: string) => ot(language, key);
+  const rtl = isRTL(language);
   const [step, setStep] = useState(0);
   const [data, setData] = useState<OnboardingData>(initialData);
-  const [dateInput, setDateInput] = useState(""); // YYYY-MM-DD, simple text entry
+  const [dateInput, setDateInput] = useState("");
+  const [dateError, setDateError] = useState("");
   const [emailInput, setEmailInput] = useState("");
   const [passwordInput, setPasswordInput] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState("");
+  const [statusType, setStatusType] = useState<
+    "error" | "info" | "success"
+  >("info");
+
   const fade = useRef(new Animated.Value(1)).current;
 
   const steps = [
@@ -157,79 +233,250 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
     "notifications",
     "signup",
   ] as const;
+
   const total = steps.length;
   const current = steps[step];
 
+  useEffect(() => {
+    let mounted = true;
+
+    AsyncStorage.getItem(PENDING_KEY)
+      .then((raw) => {
+        if (!mounted || !raw) return;
+
+        try {
+          const pending = JSON.parse(raw) as Partial<OnboardingData>;
+          setData({ ...initialData, ...pending });
+          if (pending.lastPeriodStart) {
+            setDateInput(formatISODateInput(pending.lastPeriodStart));
+          }
+          if (pending.email) setEmailInput(pending.email);
+          setStep(total - 1);
+        } catch (error) {
+          console.warn("Moonii: could not restore pending onboarding", error);
+          void AsyncStorage.removeItem(PENDING_KEY);
+        }
+      })
+      .catch((error) => {
+        console.warn("Moonii: could not read pending onboarding", error);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
   function animateTo(nextStep: number) {
     Animated.sequence([
-      Animated.timing(fade, { toValue: 0, duration: 120, useNativeDriver: true }),
-      Animated.timing(fade, { toValue: 1, duration: 180, useNativeDriver: true }),
+      Animated.timing(fade, {
+        toValue: 0,
+        duration: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fade, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
     ]).start();
+
     setStep(nextStep);
+    setStatusMessage("");
   }
 
   function next() {
+    if (current === "period") {
+      const isoDate = parseDateInput(dateInput);
+
+      if (!isoDate) {
+        setDateError(
+          dateInput.length === 0
+            ? t("dateRequired")
+            : t("dateInvalid")
+        );
+        return;
+      }
+
+      setDateError("");
+      update("lastPeriodStart", isoDate);
+    }
+
     if (step < total - 1) animateTo(step + 1);
   }
+
   function back() {
     if (step > 0) animateTo(step - 1);
   }
 
-  function update<K extends keyof OnboardingData>(key: K, value: OnboardingData[K]) {
+  function update<K extends keyof OnboardingData>(
+    key: K,
+    value: OnboardingData[K]
+  ) {
     setData((prev) => ({ ...prev, [key]: value }));
   }
 
-  // ── Improvement #1 (persistent storage): save locally as soon as the
-  // flow finishes, then hand off to submitToBackend() for Supabase.
-  async function finish(finalData: OnboardingData) {
-    try {
-      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(finalData));
-    } catch (e) {
-      console.warn("Failed to persist onboarding data locally", e);
+  async function submitToBackend(
+    finalData: OnboardingData,
+    userId: string
+  ) {
+    const { data: authData, error: authError } =
+      await supabase.auth.getUser();
+
+    if (authError) throw authError;
+
+    if (!authData.user || authData.user.id !== userId) {
+      throw new Error(t("sessionInvalid"));
     }
-    await submitToBackend(finalData);
-    onComplete?.(finalData);
+
+    const { data: savedData, error } = await supabase
+      .from("user_onboarding")
+      .upsert(
+        {
+          user_id: userId,
+          responses: finalData,
+          updated_at: new Date().toISOString(),
+        },
+        { onConflict: "user_id" }
+      )
+      .select("user_id")
+      .single();
+
+    if (error) throw error;
+
+    if (!savedData?.user_id) {
+      throw new Error(t("saveFailed"));
+    }
+
+    console.log("Moonii: onboarding saved", savedData.user_id);
   }
 
-  // ── Backend integration point. Wire this up to Supabase once the
-  // project's client/schema exists — see notes: table stores questionnaire
-  // answers + a symptom/energy "flag" column that the tip-recommendation
-  // engine reads from to serve tagged tips.
-  async function submitToBackend(finalData: OnboardingData) {
-    // Example shape, once Supabase is wired in:
-    //
-    // const { error } = await supabase.from("onboarding_responses").insert({
-    //   user_id: currentUser.id,
-    //   last_period_start: finalData.lastPeriodStart,
-    //   help_needs: finalData.helpNeeds,
-    //   conditions: finalData.conditions,
-    //   condition_severity: finalData.severity,
-    //   dietary: finalData.dietary,
-    //   age_range: finalData.ageRange,
-    //   timezone: finalData.timezone,
-    //   notifications_enabled: finalData.notificationsEnabled,
-    // });
-    // if (error) throw error;
-    console.log("submitToBackend (stub) →", finalData);
+  async function finish(finalData: OnboardingData) {
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(finalData));
+    await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(finalData));
+
+    const { data: authData, error: authError } =
+      await supabase.auth.getUser();
+
+    if (authError) throw authError;
+
+    if (!authData.user) {
+      throw new Error(t("signinRequired"));
+    }
+
+    await submitToBackend(finalData, authData.user.id);
+
+    await onComplete?.(finalData);
+    await AsyncStorage.removeItem(PENDING_KEY);
   }
 
-  function handleSignUp(method: "google" | "apple" | "email") {
-    update("signUpMethod", method);
-    if (method === "email") {
-      if (!emailInput || passwordInput.length < 8) {
-        Alert.alert("Almost there", "Enter an email and a password of at least 8 characters.");
-        return;
-      }
-      finish({ ...data, signUpMethod: method, email: emailInput });
+  async function handleSignUp(
+    method: "google" | "apple" | "email"
+  ) {
+    if (isSubmitting) return;
+
+    setStatusMessage("");
+
+    if (method !== "email") {
+      setStatusType("info");
+      setStatusMessage(
+        t("methodUnavailable")
+      );
       return;
     }
-    // Google / Apple: hand off to their native sign-in SDKs, then finish().
-    // e.g. const result = await GoogleSignin.signIn(); ...
-    finish({ ...data, signUpMethod: method });
+
+    const email = emailInput.trim().toLowerCase();
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setStatusType("error");
+      setStatusMessage(t("emailInvalid"));
+      return;
+    }
+
+    if (passwordInput.length < 8) {
+      setStatusType("error");
+      setStatusMessage(t("passwordShort"));
+      return;
+    }
+
+    setIsSubmitting(true);
+    setStatusMessage(t("connecting"));
+
+    const finalData: OnboardingData = {
+      ...data,
+      signUpMethod: "email",
+      email,
+    };
+
+    try {
+      await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(finalData));
+      await AsyncStorage.setItem(PENDING_KEY, JSON.stringify(finalData));
+
+      console.log("Moonii: starting authentication", email);
+
+      const signup = await supabase.auth.signUp({
+        email,
+        password: passwordInput,
+      });
+
+      let needsLogin = false;
+
+      if (signup.error) {
+        const message = signup.error.message.toLowerCase();
+
+        if (
+          message.includes("already registered") ||
+          message.includes("already exists")
+        ) {
+          needsLogin = true;
+        } else {
+          throw signup.error;
+        }
+      } else if (
+        signup.data.user?.identities &&
+        signup.data.user.identities.length === 0
+      ) {
+        needsLogin = true;
+      }
+
+      let session = signup.data.session;
+
+      if (needsLogin) {
+        const login = await supabase.auth.signInWithPassword({
+          email,
+          password: passwordInput,
+        });
+
+        if (login.error) throw login.error;
+
+        session = login.data.session;
+      }
+
+      if (!session) {
+        setStatusType("info");
+        setStatusMessage(
+          t("confirmEmail")
+        );
+        return;
+      }
+
+      await finish(finalData);
+
+      setStatusType("success");
+      setStatusMessage(t("profileSaved"));
+    } catch (error: any) {
+      console.error("Moonii authentication or sync error:", error);
+
+      setStatusType("error");
+      setStatusMessage(
+        error?.message || t("genericError")
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, rtl ? { direction: "rtl" } : null]}>
       <View style={styles.header}>
         {step > 0 ? (
           <TouchableOpacity onPress={back} hitSlop={12}>
@@ -238,46 +485,83 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
         ) : (
           <View style={{ width: 20 }} />
         )}
+
+        <TouchableOpacity onPress={() => setLanguageModal(true)} style={styles.languageButton}>
+          <Text style={styles.languageButtonText}>{language.toUpperCase()}</Text>
+        </TouchableOpacity>
+
         <ProgressBar step={step} total={total} />
+
         <Text style={styles.stepCount}>
           {step + 1}/{total}
         </Text>
       </View>
 
-      <Animated.View style={{ flex: 1, opacity: fade, paddingHorizontal: 24 }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+      <Animated.View
+        style={{
+          flex: 1,
+          opacity: fade,
+          paddingHorizontal: 24,
+        }}
+      >
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 24 }}
+        >
           {current === "period" && (
             <StepShell
-              title="When did your last period start?"
-              subtitle="This is how moonii works out where you are in your cycle."
+              rtl={rtl}
+              title={t("periodTitle")}
+              subtitle={t("periodSubtitle")}
             >
               <TextInput
                 value={dateInput}
-                onChangeText={(t) => {
-                  setDateInput(t);
-                  update("lastPeriodStart", t);
+                onChangeText={(value) => {
+                  const formatted = formatDateInput(value);
+                  setDateInput(formatted);
+                  setDateError("");
+
+                  const isoDate = parseDateInput(formatted);
+                  update("lastPeriodStart", isoDate);
                 }}
-                placeholder="YYYY-MM-DD"
+                placeholder="DD/MM/YYYY"
                 placeholderTextColor={MUTED}
-                style={styles.input}
-                keyboardType={Platform.select({ ios: "numbers-and-punctuation", default: "default" })}
+                style={[
+                  styles.input,
+                  dateError ? styles.inputError : undefined,
+                  rtl ? { writingDirection: "ltr", textAlign: "left" } : null,
+                ]}
+                keyboardType="number-pad"
+                maxLength={10}
               />
-              <Text style={styles.hint}>
-                Swap this for a native date picker (e.g. @react-native-community/datetimepicker)
-                before shipping — free text is a placeholder for the wireframe.
+
+              <Text style={[styles.hint, dateError ? styles.dateError : null]}>
+                {dateError || t("dateExample")}
               </Text>
             </StepShell>
           )}
 
           {current === "help" && (
-            <StepShell title="What do you need most help with?" subtitle="Select all that apply.">
+            <StepShell
+              rtl={rtl}
+              title={t("helpTitle")}
+              subtitle={t("selectAll")}
+            >
               <View style={styles.chipWrap}>
                 {HELP_OPTIONS.map((opt) => (
                   <Chip
                     key={opt}
-                    label={opt}
+                    label={t(({
+                      "Managing symptoms e.g. cramps": "helpSymptoms",
+                      "Understanding my cycle better": "helpCycle",
+                      "Emotional / mood support": "helpMood",
+                      "Building better habits": "helpHabits",
+                      Tracking: "helpTracking",
+                    } as Record<string, string>)[opt])}
                     selected={data.helpNeeds.includes(opt)}
-                    onPress={() => update("helpNeeds", toggleInArray(data.helpNeeds, opt))}
+                    onPress={() =>
+                      update("helpNeeds", toggleInArray(data.helpNeeds, opt))
+                    }
                   />
                 ))}
               </View>
@@ -285,64 +569,107 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
           )}
 
           {current === "conditions" && (
-            <StepShell title="Do you have any of the following conditions?">
-              {(["endometriosis", "pcos", "none"] as Condition[]).map((cond) => {
-                const isSelected = data.conditions.includes(cond);
-                const label =
-                  cond === "endometriosis" ? "Endometriosis" : cond === "pcos" ? "PCOS" : "None of these";
-                return (
-                  <View key={cond} style={{ marginBottom: 14 }}>
-                    <TouchableOpacity
-                      onPress={() => {
-                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        if (cond === "none") {
-                          update("conditions", isSelected ? [] : ["none"]);
-                        } else {
-                          const withoutNone = data.conditions.filter((c) => c !== "none");
-                          update("conditions", toggleInArray(withoutNone, cond));
-                        }
-                      }}
-                      style={[styles.rowOption, isSelected && styles.rowOptionSelected]}
-                    >
-                      <Text style={[styles.rowOptionText, isSelected && styles.chipTextSelected]}>
-                        {label}
-                      </Text>
-                      <Feather
-                        name={isSelected ? "check-circle" : "circle"}
-                        size={18}
-                        color={isSelected ? ACCENT : MUTED}
-                      />
-                    </TouchableOpacity>
+            <StepShell rtl={rtl} title={t("conditionsTitle")}>
+              {(["endometriosis", "pcos", "none"] as Condition[]).map(
+                (cond) => {
+                  const isSelected = data.conditions.includes(cond);
 
-                    {isSelected && cond !== "none" && (
-                      <View style={styles.chipWrap}>
-                        {(["low", "medium", "severe"] as Severity[]).map((sev) => (
-                          <Chip
-                            key={sev}
-                            label={sev[0].toUpperCase() + sev.slice(1)}
-                            selected={data.severity[cond] === sev}
-                            onPress={() =>
-                              update("severity", { ...data.severity, [cond]: sev })
-                            }
-                          />
-                        ))}
-                      </View>
-                    )}
-                  </View>
-                );
-              })}
+                  const label =
+                    cond === "endometriosis"
+                      ? t("endometriosis")
+                      : cond === "pcos"
+                      ? t("pcos")
+                      : t("none");
+
+                  return (
+                    <View key={cond} style={{ marginBottom: 14 }}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          triggerHaptic();
+
+                          if (cond === "none") {
+                            update(
+                              "conditions",
+                              isSelected ? [] : ["none"]
+                            );
+                          } else {
+                            const withoutNone = data.conditions.filter(
+                              (c) => c !== "none"
+                            );
+
+                            update(
+                              "conditions",
+                              toggleInArray(withoutNone, cond)
+                            );
+                          }
+                        }}
+                        style={[
+                          styles.rowOption,
+                          isSelected && styles.rowOptionSelected,
+                        ]}
+                      >
+                        <Text
+                          style={[
+                            styles.rowOptionText,
+                            isSelected && styles.chipTextSelected,
+                          ]}
+                        >
+                          {label}
+                        </Text>
+
+                        <Feather
+                          name={isSelected ? "check-circle" : "circle"}
+                          size={18}
+                          color={isSelected ? ACCENT : MUTED}
+                        />
+                      </TouchableOpacity>
+
+                      {isSelected && cond !== "none" && (
+                        <View style={styles.chipWrap}>
+                          {(["low", "medium", "severe"] as Severity[]).map(
+                            (sev) => (
+                              <Chip
+                                key={sev}
+                                rtl={rtl}
+                                label={t(sev)}
+                                selected={data.severity[cond] === sev}
+                                onPress={() =>
+                                  update("severity", {
+                                    ...data.severity,
+                                    [cond]: sev,
+                                  })
+                                }
+                              />
+                            )
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  );
+                }
+              )}
             </StepShell>
           )}
 
           {current === "dietary" && (
-            <StepShell title="Dietary preferences" subtitle="Select all that apply.">
+            <StepShell
+              rtl={rtl}
+              title={t("dietaryTitle")}
+              subtitle={t("selectAll")}
+            >
               <View style={styles.chipWrap}>
                 {DIETARY_OPTIONS.map((opt) => (
                   <Chip
                     key={opt}
-                    label={opt}
+                    label={t(({
+                      "No restrictions": "dietNone", Vegetarian: "dietVegetarian", Vegan: "dietVegan",
+                      "Gluten free": "dietGluten", Pescatarian: "dietPescatarian", Halal: "dietHalal",
+                      Kosher: "dietKosher", "Dairy free": "dietDairy",
+                    } as Record<string, string>)[opt])}
                     selected={data.dietary.includes(opt)}
-                    onPress={() => update("dietary", toggleInArray(data.dietary, opt))}
+                    onPress={() =>
+                      update("dietary", toggleInArray(data.dietary, opt))
+                    }
                   />
                 ))}
               </View>
@@ -350,11 +677,12 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
           )}
 
           {current === "age" && (
-            <StepShell title="Age range">
+            <StepShell rtl={rtl} title={t("ageTitle")}>
               <View style={styles.chipWrap}>
                 {AGE_RANGES.map((range) => (
                   <Chip
                     key={range}
+                    rtl={rtl}
                     label={range}
                     selected={data.ageRange === range}
                     onPress={() => update("ageRange", range)}
@@ -365,23 +693,26 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
           )}
 
           {current === "location" && (
-            <StepShell title="Location / timezone" subtitle="We'll use this to time your daily check-ins.">
-              {/* Swap for a real dropdown (e.g. a bottom-sheet picker) —
-                  a plain text field is a placeholder for the wireframe. */}
+            <StepShell
+              rtl={rtl}
+              title={t("locationTitle")}
+              subtitle={t("locationSubtitle")}
+            >
               <TextInput
-                value={data.timezone ?? ""}
-                onChangeText={(t) => update("timezone", t)}
-                placeholder="e.g. Europe/Kyiv"
+                value={data.region ?? ""}
+                onChangeText={(t) => update("region", t)}
+                placeholder={t("locationPlaceholder")}
                 placeholderTextColor={MUTED}
-                style={styles.input}
+                style={[styles.input, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}
               />
             </StepShell>
           )}
 
           {current === "notifications" && (
             <StepShell
-              title="Stay in the loop"
-              subtitle="moonii sends a gentle daily check-in — never more than one a day. You can turn this off anytime in Settings."
+              rtl={rtl}
+              title={t("notificationsTitle")}
+              subtitle={t("notificationsSubtitle")}
             >
               <TouchableOpacity
                 onPress={() => update("notificationsEnabled", true)}
@@ -391,72 +722,137 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
                   { marginBottom: 12 },
                 ]}
               >
-                <Text style={[styles.rowOptionText, data.notificationsEnabled && styles.chipTextSelected]}>
-                  Yes, remind me — "How are you feeling today?"
-                </Text>
+                <Text style={[styles.rowOptionText, data.notificationsEnabled && styles.chipTextSelected, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}>{t("yesReminder")}</Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 onPress={() => update("notificationsEnabled", false)}
-                style={[styles.rowOption, !data.notificationsEnabled && styles.rowOptionSelected]}
+                style={[
+                  styles.rowOption,
+                  !data.notificationsEnabled && styles.rowOptionSelected,
+                ]}
               >
-                <Text style={[styles.rowOptionText, !data.notificationsEnabled && styles.chipTextSelected]}>
-                  Not right now
-                </Text>
+                <Text style={[styles.rowOptionText, !data.notificationsEnabled && styles.chipTextSelected, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}>{t("notNow")}</Text>
               </TouchableOpacity>
-              <Text style={styles.hint}>
-                Tapping the notification should deep-link straight to the log page, not just open
-                the app — wire this through your push payload's route/screen field.
-              </Text>
+
             </StepShell>
           )}
 
           {current === "signup" && (
-            <StepShell title="Create your account" subtitle="Last step.">
-              <TouchableOpacity style={styles.authButton} onPress={() => handleSignUp("google")}>
+            <StepShell rtl={rtl} title={t("signupTitle")} subtitle={t("lastStep")}>
+              <TouchableOpacity
+                style={styles.authButton}
+                onPress={() => handleSignUp("google")}
+                disabled={isSubmitting}
+              >
                 <Feather name="mail" size={16} color={DARK} />
-                <Text style={styles.authButtonText}>Continue with Google</Text>
+                <Text style={styles.authButtonText}>{t("google")}</Text>
               </TouchableOpacity>
+
               {Platform.OS === "ios" && (
-                <TouchableOpacity style={styles.authButton} onPress={() => handleSignUp("apple")}>
+                <TouchableOpacity
+                  style={styles.authButton}
+                  onPress={() => handleSignUp("apple")}
+                  disabled={isSubmitting}
+                >
                   <Feather name="smartphone" size={16} color={DARK} />
-                  <Text style={styles.authButtonText}>Continue with Apple</Text>
+                  <Text style={styles.authButtonText}>{t("apple")}</Text>
                 </TouchableOpacity>
               )}
 
-              <Text style={styles.orDivider}>or</Text>
+              <Text style={styles.orDivider}>{t("or")}</Text>
 
               <TextInput
                 value={emailInput}
                 onChangeText={setEmailInput}
-                placeholder="Email"
+                placeholder={t("email")}
                 placeholderTextColor={MUTED}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                style={styles.input}
+                autoCorrect={false}
+                style={[styles.input, rtl ? { writingDirection: "ltr", textAlign: "left" } : null]}
               />
-              <TextInput
-                value={passwordInput}
-                onChangeText={setPasswordInput}
-                placeholder="Create a password"
-                placeholderTextColor={MUTED}
-                secureTextEntry
-                style={[styles.input, { marginTop: 10 }]}
-              />
+
+              <View style={[styles.passwordContainer, { marginTop: 10 }]}>
+                <TextInput
+                  value={passwordInput}
+                  onChangeText={setPasswordInput}
+                  placeholder={t("password")}
+                  placeholderTextColor={MUTED}
+                  secureTextEntry={!showPassword}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  style={[styles.passwordInput, rtl ? { writingDirection: "ltr", textAlign: "left" } : null]}
+                />
+
+                <TouchableOpacity
+                  onPress={() => setShowPassword((visible) => !visible)}
+                  style={styles.passwordToggle}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    showPassword ? t("hidePassword") : t("showPassword")
+                  }
+                  hitSlop={10}
+                >
+                  <Feather
+                    name={showPassword ? "eye-off" : "eye"}
+                    size={19}
+                    color={MUTED}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {statusMessage ? (
+                <Text
+                  style={[
+                    styles.statusMessage,
+                    statusType === "error" && styles.statusError,
+                    statusType === "success" && styles.statusSuccess,
+                  ]}
+                >
+                  {statusMessage}
+                </Text>
+              ) : null}
+
               <TouchableOpacity
-                style={[styles.primaryButton, { marginTop: 16 }]}
+                style={[
+                  styles.primaryButton,
+                  { marginTop: 16 },
+                  isSubmitting && { opacity: 0.6 },
+                ]}
                 onPress={() => handleSignUp("email")}
+                disabled={isSubmitting}
               >
-                <Text style={styles.primaryButtonText}>Create account</Text>
+                <Text style={styles.primaryButtonText}>
+                  {isSubmitting ? t("creating") : t("createAccount")}
+                </Text>
               </TouchableOpacity>
             </StepShell>
           )}
         </ScrollView>
       </Animated.View>
 
+      <Modal visible={languageModal} transparent animationType="fade" onRequestClose={() => setLanguageModal(false)}>
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.languageModal, rtl ? { direction: "rtl" } : null]}>
+            <Text style={styles.stepTitle}>{t("language")}</Text>
+            <ScrollView style={{ maxHeight: 420 }}>
+              {LANGUAGES.map((item) => (
+                <TouchableOpacity key={item.code} style={styles.languageOption} onPress={() => { onLanguageChange?.(item.code); setLanguageModal(false); }}>
+                  <Text style={[styles.languageOptionText, rtl ? { textAlign: "right", writingDirection: "rtl" } : null]}>{item.label}</Text>
+                  {language === item.code ? <Feather name="check" size={17} color={ACCENT} /> : null}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+            <TouchableOpacity onPress={() => setLanguageModal(false)} style={[styles.primaryButton, { marginTop: 12 }]}><Text style={styles.primaryButtonText}>{t("continue")}</Text></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
       {current !== "signup" && (
         <View style={styles.footer}>
           <TouchableOpacity style={styles.primaryButton} onPress={next}>
-            <Text style={styles.primaryButtonText}>Continue</Text>
+            <Text style={styles.primaryButtonText}>{t("continue")}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -464,9 +860,12 @@ export default function Onboarding({ onComplete }: { onComplete?: (data: Onboard
   );
 }
 
-// ─────────────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: BG, paddingTop: 60 },
+  screen: {
+    flex: 1,
+    backgroundColor: BG,
+    paddingTop: 60,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
@@ -474,6 +873,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     gap: 12,
   },
+  languageButton: { minWidth: 34, paddingHorizontal: 7, paddingVertical: 5, borderRadius: 12, backgroundColor: CARD, alignItems: "center" },
+  languageButtonText: { fontSize: 10, color: MUTED, fontWeight: "700" },
+  modalBackdrop: { flex: 1, backgroundColor: "rgba(26,14,20,0.35)", justifyContent: "center", padding: 24 },
+  languageModal: { backgroundColor: BG, borderRadius: 22, padding: 20 },
+  languageOption: { minHeight: 46, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderBottomWidth: 1, borderBottomColor: BORDER },
+  languageOptionText: { fontSize: 14, color: DARK },
   progressTrack: {
     flex: 1,
     height: 4,
@@ -481,14 +886,43 @@ const styles = StyleSheet.create({
     backgroundColor: BORDER,
     overflow: "hidden",
   },
-  progressFill: { height: 4, backgroundColor: ACCENT, borderRadius: 2 },
-  stepCount: { fontSize: 11, color: MUTED, minWidth: 28, textAlign: "right" },
-
-  stepTitle: { fontSize: 22, fontWeight: "600", color: DARK, marginTop: 8 },
-  stepSubtitle: { fontSize: 13, color: MUTED, marginTop: 6, lineHeight: 19 },
-  hint: { fontSize: 11, color: MUTED, marginTop: 10, fontStyle: "italic" },
-
-  chipWrap: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
+  progressFill: {
+    height: 4,
+    backgroundColor: ACCENT,
+    borderRadius: 2,
+  },
+  stepCount: {
+    fontSize: 11,
+    color: MUTED,
+    minWidth: 28,
+    textAlign: "right",
+  },
+  stepTitle: {
+    fontSize: 22,
+    fontWeight: "600",
+    color: DARK,
+    marginTop: 8,
+  },
+  stepSubtitle: {
+    fontSize: 13,
+    color: MUTED,
+    marginTop: 6,
+    lineHeight: 19,
+  },
+  hint: {
+    fontSize: 11,
+    color: MUTED,
+    marginTop: 10,
+    fontStyle: "italic",
+  },
+  dateError: {
+    color: "#b42318",
+  },
+  chipWrap: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+  },
   chip: {
     paddingVertical: 9,
     paddingHorizontal: 15,
@@ -497,10 +931,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: BORDER,
   },
-  chipSelected: { backgroundColor: ACCENT + "18", borderColor: ACCENT },
-  chipText: { fontSize: 13, color: MUTED },
-  chipTextSelected: { color: DARK, fontWeight: "500" },
-
+  chipSelected: {
+    backgroundColor: ACCENT + "18",
+    borderColor: ACCENT,
+  },
+  chipText: {
+    fontSize: 13,
+    color: MUTED,
+  },
+  chipTextSelected: {
+    color: DARK,
+    fontWeight: "500",
+  },
   rowOption: {
     flexDirection: "row",
     alignItems: "center",
@@ -512,9 +954,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 16,
   },
-  rowOptionSelected: { borderColor: ACCENT, backgroundColor: ACCENT + "10" },
-  rowOptionText: { fontSize: 14, color: DARK },
-
+  rowOptionSelected: {
+    borderColor: ACCENT,
+    backgroundColor: ACCENT + "10",
+  },
+  rowOptionText: {
+    fontSize: 14,
+    color: DARK,
+  },
   input: {
     backgroundColor: CARD,
     borderWidth: 1,
@@ -525,7 +972,29 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: DARK,
   },
-
+  inputError: {
+    borderColor: "#b42318",
+  },
+  passwordContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: CARD,
+    borderWidth: 1,
+    borderColor: BORDER,
+    borderRadius: 14,
+    paddingLeft: 16,
+    paddingRight: 14,
+  },
+  passwordInput: {
+    flex: 1,
+    paddingVertical: 14,
+    fontSize: 14,
+    color: DARK,
+  },
+  passwordToggle: {
+    padding: 4,
+    marginLeft: 8,
+  },
   authButton: {
     flexDirection: "row",
     alignItems: "center",
@@ -538,16 +1007,44 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     marginBottom: 10,
   },
-  authButtonText: { fontSize: 14, fontWeight: "500", color: DARK },
-  orDivider: { textAlign: "center", color: MUTED, fontSize: 12, marginVertical: 12 },
-
+  authButtonText: {
+    fontSize: 14,
+    fontWeight: "500",
+    color: DARK,
+  },
+  orDivider: {
+    textAlign: "center",
+    color: MUTED,
+    fontSize: 12,
+    marginVertical: 12,
+  },
+  statusMessage: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 12,
+    textAlign: "center",
+    color: MUTED,
+  },
+  statusError: {
+    color: "#b42318",
+  },
+  statusSuccess: {
+    color: "#287a45",
+  },
   primaryButton: {
     backgroundColor: ACCENT,
     borderRadius: 50,
     paddingVertical: 16,
     alignItems: "center",
   },
-  primaryButtonText: { color: "#fff", fontSize: 15, fontWeight: "600" },
-
-  footer: { paddingHorizontal: 24, paddingBottom: 28, paddingTop: 8 },
+  primaryButtonText: {
+    color: "#fff",
+    fontSize: 15,
+    fontWeight: "600",
+  },
+  footer: {
+    paddingHorizontal: 24,
+    paddingBottom: 28,
+    paddingTop: 8,
+  },
 });

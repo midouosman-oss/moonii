@@ -1,0 +1,15 @@
+node_modules/
+.expo/
+.env
+.env.*
+!.env.example
+dist/
+web-build/
+*.log
+.DS_Store
+moonii-auth-*.txt
+moonii-diagnostic.txt
+*.bak
+*.ps1
+EXPO_PUBLIC_SUPABASE_URL=*
+app/app_backup/_layout.tsx.txt

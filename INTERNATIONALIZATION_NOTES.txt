@@ -1,0 +1,60 @@
+MOONII INTERNATIONALIZATION UPDATE — STAGE 4 (WORKING PATCH)
+
+Base: stage-3 archive supplied in the conversation.
+
+Changes in this patch:
+- Added an in-onboarding language selector for all 17 supported languages. The selected language is persisted through the existing CycleSettings.language field.
+- Localized 56 onboarding labels, prompts, validation messages, and option labels in all 17 locales.
+- Kept canonical onboarding option values and condition/severity codes unchanged; only their displayed labels are translated.
+- Removed an internal developer instruction about push-notification deep linking from the user-facing onboarding screen.
+- Added Arabic right-to-left text direction to onboarding layout, headings, option labels, and text inputs. Arabic visual QA is still required.
+- Expanded Daily Log option translations for yoga, Pilates, nourishment descriptors, and recommendation tags across the supported locales.
+- Verified that the Daily Log component uses its language prop; HomeScreen retains settings.language where it is in scope.
+- Cycle calculations, Supabase auth/upsert behavior, AsyncStorage keys, and DailyLog stored values/schema were not intentionally changed.
+
+Still incomplete — this is not a claim of full 17-language localization:
+- The 12 long-form TipLibrary recommendation cards are fully translated in Russian and English only. Other locales still receive English nudge/explanation copy; these need proper translation before release.
+- Country names remain in English in the locale selector.
+- Some provider-authentication and backend error messages may be returned in English by Supabase.
+- Arabic RTL needs visual testing on web and native devices; all 17 locales need native-speaker review for wording, line breaks, and layout.
+
+Validation performed:
+- TypeScript/TSX transpile syntax check: 12 source files, 0 syntax errors.
+- Onboarding translation coverage check: 17 locales × 56 keys, 0 missing entries.
+- Full `tsc --noEmit` / Expo build was not run because `node_modules` and the Expo base tsconfig are not installed in this workspace.
+- Runtime navigation, auth, RTL rendering, and physical-device behavior remain unverified.
+
+STAGE 5 — LONG-FORM TIP LOCALIZATION PATCH
+- Added `data/localizedTips.ts` with complete topic, nudge, explanation, and tag copy for all 12 recommendation cards in Arabic, Hindi, Bengali, Malay, Vietnamese, Thai, Indonesian, Simplified Chinese, Ukrainian, Spanish, French, German, Portuguese, Japanese, and Korean.
+- The existing complete Russian translations remain in `components/TipLibrary.tsx`; English remains the source copy. All 17 supported locales therefore have a complete copy set for all 12 cards.
+- `TipLibrary` now selects the localized card copy by locale and falls back to English only if a translation key is unexpectedly missing.
+- Copy avoids presenting cycle-phase exercise schedules or foods as hormone treatments. Iron-deficiency wording advises medical assessment when symptoms or heavy bleeding persist.
+- Static TS/TSX syntax validation: 13 files, zero parse errors.
+- Translation coverage validation: 15 new locale maps × 12 card IDs, no missing IDs. Russian and English remain separately covered.
+- Not yet performed: full `tsc --noEmit`, Expo build, runtime testing, visual RTL review, and native-speaker review. Country names in the onboarding country selector remain English.
+
+STAGE 6 — COUNTRY LABELS AND RTL DAILY LOG
+- Added localized display names for all 26 country choices in all 16 non-English locales (English remains the source locale). The country and region values saved to existing settings remain the original English canonical names, so this is display-only and does not alter stored data.
+- The dashboard country chip and country selector now display localized country names.
+- Applied Arabic RTL direction to the locale sheet and Daily Log sheet; section headings, date/note input text, country labels and save action receive RTL-aware text direction/alignment.
+- The main dashboard already applies Arabic direction at its root; onboarding retains its existing RTL-aware text handling.
+- No cycle calculations, Supabase behavior, AsyncStorage keys, or stored log values/schema were changed.
+- Pending: run full TypeScript typecheck and Expo build with dependencies installed; visually inspect Arabic on web/iOS/Android; native-speaker QA remains recommended.
+
+STAGE 7 — DAILY LOG LOCALE AUDIT
+- Audited every literal translation key used by the onboarding, dashboard, and TipLibrary components; all keys resolve to display text (no raw translation-key tokens were found). This does not by itself prove every string is translated rather than falling back to English.
+- Audited the Daily Log's mood, energy, sleep, movement, nourishment, and symptom options across all 16 non-English locales. Added the missing Indonesian label for "Gym" ("Pusat kebugaran").
+- Canonical option values remain unchanged; this is display-only and does not alter stored DailyLog values.
+- Rechecked localized recommendation coverage: 15 additional locale maps × 12 tip IDs, with no missing card IDs.
+- Full dependency installation/typecheck/Expo build remains blocked because npm dependencies are not cached in this environment; Arabic and device-level visual QA remain pending.
+
+
+STAGE 8 — DASHBOARD PHASE LABEL + COVERAGE AUDIT
+- Found one genuine dashboard translation fallback: the standalone “PHASE” label used in the phase/day progress line. Added localized labels for all 16 non-English locales (Arabic, Hindi, Bengali, Malay, Vietnamese, Thai, Indonesian, Simplified Chinese, Russian, Ukrainian, Spanish, French, German, Portuguese, Japanese, Korean). French and German use “PHASE”, which is the standard spelling in those languages.
+- Re-audited the dashboard's phase names, phase descriptions, energy labels, insights, day/of counters, and phase heading. No remaining English fallbacks were found among these active keys; identical French/German wording is intentional.
+- Rechecked country selector data: all 26 canonical country values have entries in every non-English locale map. Some country names are intentionally identical to English in languages where that spelling is standard.
+- Rechecked long-form recommendation IDs: all 15 additional locale maps contain the same 12 recommendation IDs.
+- Rechecked Daily Log option coverage. Remaining identical spellings are established loanwords/acronyms (for example Yoga, Pilates, PCOS, and selected cognates), not missing map entries.
+- Updated the root font import to DMSans_700Bold to preserve the font-export correction verified by the user with TypeScript and Expo Doctor.
+- This overlay intentionally omits package.json and package-lock.json so it cannot overwrite the user's locally validated dependency versions.
+- Validation in this workspace: TypeScript transpile syntax audit is performed separately; full project typecheck and Expo Doctor were successfully run by the user on the local project (0 TypeScript errors; 17/17 Expo Doctor checks). Runtime visual QA and native-speaker review remain outstanding.
