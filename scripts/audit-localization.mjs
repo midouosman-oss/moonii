@@ -45,9 +45,11 @@ console.log(`Onboarding English keys: ${onboardingEnglish.length}`);
 for (const locale of locales) {
   const tipBlock = locale === "en"
     ? uniqueTipIds
-    : locale === "ru"
-      ? idsIn(tipComponent.slice(ruStart, tipComponent.indexOf("};", ruStart)))
-      : [...new Set([...idsIn(localeBlock(localized, locale, tipStart)), ...idsIn(localeBlock(mandeepLocalized, locale, mandeepTipStart))])];
+    : [...new Set([
+        ...(locale === "ru" ? idsIn(tipComponent.slice(ruStart, tipComponent.indexOf("};", ruStart))) : []),
+        ...idsIn(localeBlock(localized, locale, tipStart)),
+        ...idsIn(localeBlock(mandeepLocalized, locale, mandeepTipStart))
+      ])];
   const covered = locale === "en" ? uniqueTipIds : tipBlock;
   const missing = uniqueTipIds.filter((id) => !covered.includes(id));
   const onKeys = keysIn(localeBlock(onboarding, locale, onStart));
