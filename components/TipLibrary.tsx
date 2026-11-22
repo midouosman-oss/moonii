@@ -87,7 +87,7 @@ const PILLAR_KEYS: Record<Tip["pillar"], string> = {
 };
 
 function TipCard({ tip, language }: { tip: Tip; language: string }) {
-  const localized = language === "ru" ? RU_TIPS[tip.id] : getLocalizedTip(language, tip.id);
+  const localized = (language === "ru" ? RU_TIPS[tip.id] : undefined) ?? getLocalizedTip(language, tip.id);
   const pillar = translate(language, PILLAR_KEYS[tip.pillar]);
   const energy = translate(language, `energy_${tip.energy.toLowerCase()}`);
   const color = tip.pillar === "Nourishment" ? "#c4836a" : tip.pillar === "Movement" ? "#7ab090" : "#9a9a50";
