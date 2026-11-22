@@ -5,6 +5,7 @@ const locales = ["en", "ar", "hi", "bn", "ms", "vi", "th", "id", "zh", "ru", "uk
 const library = read("../data/tipLibrary.ts");
 const localized = read("../data/localizedTips.ts");
 const mandeepLocalized = read("../data/mandeepLocalizedTips.ts");
+const mandeepLocalizedExtra = read("../data/mandeepLocalizedTipsExtra.ts");
 const tipComponent = read("../components/TipLibrary.tsx");
 const onboarding = read("../lib/onboardingI18n.ts");
 
@@ -33,6 +34,7 @@ function keysIn(source) {
 
 const tipStart = localized.indexOf("export const LOCALIZED_TIPS");
 const mandeepTipStart = mandeepLocalized.indexOf("export const MANDEEP_LOCALIZED_TIPS");
+const mandeepExtraTipStart = mandeepLocalizedExtra.indexOf("export const MANDEEP_LOCALIZED_TIPS_EXTRA");
 const onStart = onboarding.indexOf("export const ONBOARDING_TRANSLATIONS");
 const ruStart = tipComponent.indexOf("const RU_TIPS");
 const onboardingEnglish = keysIn(localeBlock(onboarding, "en", onStart));
@@ -48,7 +50,8 @@ for (const locale of locales) {
     : [...new Set([
         ...(locale === "ru" ? idsIn(tipComponent.slice(ruStart, tipComponent.indexOf("};", ruStart))) : []),
         ...idsIn(localeBlock(localized, locale, tipStart)),
-        ...idsIn(localeBlock(mandeepLocalized, locale, mandeepTipStart))
+        ...idsIn(localeBlock(mandeepLocalized, locale, mandeepTipStart)),
+        ...idsIn(localeBlock(mandeepLocalizedExtra, locale, mandeepExtraTipStart))
       ])];
   const covered = locale === "en" ? uniqueTipIds : tipBlock;
   const missing = uniqueTipIds.filter((id) => !covered.includes(id));
