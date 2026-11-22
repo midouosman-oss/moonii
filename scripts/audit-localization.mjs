@@ -33,13 +33,13 @@ const tipIds = [...library.matchAll(/"id":\s*"([A-Z]{2}-[A-Z]-\d{3})"/g)].map((m
 const uniqueTipIds = [...new Set(tipIds)];
 
 function localeBlock(source, locale, startAt = 0) {
-  const marker = new RegExp(`^\\s{2}${locale}:\\s*\\{`, "m");
+  const marker = new RegExp(`^\\s{0,2}${locale}:\\s*\\{`, "m");
   const tail = source.slice(startAt);
   const match = marker.exec(tail);
   if (!match) return "";
   const start = startAt + match.index + match[0].length;
   const rest = source.slice(start);
-  const next = /^  [a-z]{2}: \{/m.exec(rest);
+  const next = /^\\s{0,2}[a-z]{2}:\\s*\\{/m.exec(rest);
   const end = next ? start + next.index : source.indexOf("\n};", start);
   return source.slice(start, end < 0 ? source.length : end);
 }
