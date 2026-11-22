@@ -1,4 +1,5 @@
 import type { Tip } from "@/data/tipLibrary";
+import { MANDEEP_LOCALIZED_TIPS } from "@/data/mandeepLocalizedTips";
 
 type Copy = Pick<Tip, "topic" | "nudge" | "explanation" | "tags">;
 type LocaleTips = Record<string, Copy>;
@@ -223,5 +224,5 @@ export const LOCALIZED_TIPS: Record<string, LocaleTips> = {
 };
 
 export function getLocalizedTip(language: string, tipId: string): Copy | undefined {
-  return LOCALIZED_TIPS[language]?.[tipId];
+  return MANDEEP_LOCALIZED_TIPS[language]?.[tipId] ?? LOCALIZED_TIPS[language]?.[tipId];
 }
