@@ -7,27 +7,27 @@ const localized = read("../data/localizedTips.ts");
 const tipComponent = read("../components/TipLibrary.tsx");
 const onboarding = read("../lib/onboardingI18n.ts");
 
-const tipIds = [...library.matchAll(/"id":\\s*"([A-Z]{2}-[A-Z]-\\d{3})"/g)].map((m) => m[1]);
+const tipIds = [...library.matchAll(/"id":\s*"([A-Z]{2}-[A-Z]-\d{3})"/g)].map((m) => m[1]);
 const uniqueTipIds = [...new Set(tipIds)];
 
 function localeBlock(source, locale, startAt = 0) {
-  const marker = new RegExp(`^\\\\s{2}${locale}: \\\\{\\\\s*$`, "m");
+  const marker = new RegExp(`^\\s{2}${locale}: \\{\\s*$`, "m");
   const tail = source.slice(startAt);
   const match = marker.exec(tail);
   if (!match) return "";
   const start = startAt + match.index + match[0].length;
   const rest = source.slice(start);
-  const next = /^  [a-z]{2}: \\{/m.exec(rest);
-  const end = next ? start + next.index : source.indexOf("\\n};", start);
+  const next = /^  [a-z]{2}: \{/m.exec(rest);
+  const end = next ? start + next.index : source.indexOf("\n};", start);
   return source.slice(start, end < 0 ? source.length : end);
 }
 
 function idsIn(source) {
-  return [...new Set([...source.matchAll(/"([A-Z]{2}-[A-Z]-\\d{3})"\\s*:/g)].map((m) => m[1]))];
+  return [...new Set([...source.matchAll(/"([A-Z]{2}-[A-Z]-\d{3})"\s*:/g)].map((m) => m[1]))];
 }
 
 function keysIn(source) {
-  return [...new Set([...source.matchAll(/"([A-Za-z][A-Za-z0-9]*)"\\s*:/g)].map((m) => m[1]))];
+  return [...new Set([...source.matchAll(/"([A-Za-z][A-Za-z0-9]*)"\s*:/g)].map((m) => m[1]))];
 }
 
 const tipStart = localized.indexOf("export const LOCALIZED_TIPS");
@@ -44,7 +44,7 @@ for (const locale of locales) {
   const tipBlock = locale === "en"
     ? uniqueTipIds
     : locale === "ru"
-      ? idsIn(localeBlock(tipComponent, "RU_TIPS", ruStart))
+      ? idsIn(tipComponent.slice(ruStart, tipComponent.indexOf("};", ruStart)))
       : idsIn(localeBlock(localized, locale, tipStart));
   const covered = locale === "en" ? uniqueTipIds : tipBlock;
   const missing = uniqueTipIds.filter((id) => !covered.includes(id));
